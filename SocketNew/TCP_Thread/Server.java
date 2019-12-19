@@ -1,4 +1,4 @@
-package TCP_Thread;
+package TCP;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,27 +8,41 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
 
-public class Server {
+public class Server extends Thread {
+
+    public static Socket client;
+    public static ServerSocket serverSocket;
+
+    @Override
+    public void run() {
+        try {
+            client = serverSocket.accept();
+            while(true) {
+                // Receiving and printing client messages
+                InputStreamReader streamReader = new InputStreamReader(client.getInputStream());
+                BufferedReader messageReader = new BufferedReader(streamReader);
+                String serverMessage = messageReader.readLine();
+                System.out.println("Client: " + serverMessage);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args) throws IOException {
         // Creating a scanner for user input
         Scanner scanner = new Scanner(System.in);
 
         // Starting Server on port 4321
-        ServerSocket server = new ServerSocket(4321);
-        Socket client;
+        serverSocket = new ServerSocket(4321);
 
-        // Running loop for accepting and sending messages to client
-        while( (client = server.accept()) != null) {
-            // Creating a buffered reader for client
-            InputStreamReader clientStreamReader = new InputStreamReader(client.getInputStream());
-            BufferedReader clientMessageReader = new BufferedReader(clientStreamReader);
+        // Starting message receiving service
+        Server server = new Server();
+        server.start();
 
-            // Reading and printing message from client
-            String clientMessage =  clientMessageReader.readLine();
-            System.out.println("Client: " + clientMessage);
-
-            // Reading and sending message
-            String serverMessage = scanner.next();
+        // Running loop for sending messages to client
+        while(true) {
+            String serverMessage = scanner.nextLine();
             PrintWriter sender = new PrintWriter(client.getOutputStream(), true);
             sender.println(serverMessage);
         }
